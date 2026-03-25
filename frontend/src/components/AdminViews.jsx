@@ -27,6 +27,114 @@ function StatusBadge({ children, tone = "neutral" }) {
   return <span className={`status-badge status-${tone}`}>{children}</span>;
 }
 
+export function OperationsView({ products, customers, supplies, invoices, payments, supportTickets }) {
+  const lowStock = products.filter((product) => Number(product.stock || 0) <= 20).slice(0, 5);
+  const dueCustomers = customers.filter((customer) => Number(customer.balance || 0) > 0).slice(0, 5);
+  const openTickets = supportTickets.filter((ticket) => ticket.status !== "Closed").slice(0, 5);
+  const todaySales = invoices.slice(0, 5);
+  const latestCollections = payments.slice(0, 5);
+
+  return (
+    <div className="row g-4">
+      <div className="col-lg-4">
+        <div className="card border-0 section-card glow-panel h-100">
+          <div className="card-body">
+            <SectionHeader title="Automation Center" subtitle="System-driven farm and admin priorities" />
+            <div className="d-grid gap-3">
+              <div className="soft-note">
+                <div className="fw-semibold">Auto alerts</div>
+                <div>Low stock products, due users, and open support tickets are surfaced automatically.</div>
+              </div>
+              <div className="soft-note">
+                <div className="fw-semibold">Auto calculations</div>
+                <div>Intake cost, bill totals, cashback, and due balances stay synced across admin and user modules.</div>
+              </div>
+              <div className="soft-note">
+                <div className="fw-semibold">Auto workflows</div>
+                <div>User cart autofill, reusable bills, and payment-linked collections reduce manual work.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="col-lg-8">
+        <div className="row g-4">
+          <div className="col-md-6">
+            <div className="card border-0 section-card glow-panel h-100">
+              <div className="card-body">
+                <SectionHeader title="Low Stock" subtitle="Products that need admin attention" />
+                <div className="d-grid gap-3">
+                  {lowStock.map((product) => (
+                    <div className="split-row" key={product.id}>
+                      <div>
+                        <div className="fw-semibold">{product.name}</div>
+                        <div className="small text-secondary">{product.category}</div>
+                      </div>
+                      <StatusBadge tone="danger">{product.stock} {product.unit}</StatusBadge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="card border-0 section-card glow-panel h-100">
+              <div className="card-body">
+                <SectionHeader title="Due Users" subtitle="Auto-followup collection list" />
+                <div className="d-grid gap-3">
+                  {dueCustomers.map((customer) => (
+                    <div className="split-row" key={customer.id}>
+                      <div>
+                        <div className="fw-semibold">{customer.name}</div>
+                        <div className="small text-secondary">{customer.route || "Direct"} | {customer.zone || "Local"}</div>
+                      </div>
+                      <div className="fw-semibold">{currency(customer.balance)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="card border-0 section-card glow-panel h-100">
+              <div className="card-body">
+                <SectionHeader title="Open Support" subtitle="Tickets needing admin action" />
+                <div className="d-grid gap-3">
+                  {openTickets.map((ticket) => (
+                    <div className="split-row" key={ticket.id}>
+                      <div>
+                        <div className="fw-semibold">{ticket.subject}</div>
+                        <div className="small text-secondary">{ticket.name}</div>
+                      </div>
+                      <StatusBadge tone={ticket.priority === "High" ? "danger" : "warning"}>{ticket.priority}</StatusBadge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="card border-0 section-card glow-panel h-100">
+              <div className="card-body">
+                <SectionHeader title="Farm Snapshot" subtitle="Recent sales, intake, and collections" />
+                <div className="soft-note mb-3">Milk intake records: {supplies.length} | Bills: {invoices.length} | Collections: {payments.length}</div>
+                <div className="d-grid gap-2">
+                  {todaySales.slice(0, 2).map((invoice) => <div className="small text-secondary" key={invoice.id}>Bill {invoice.invoiceNumber} for {invoice.customerName}</div>)}
+                  {latestCollections.slice(0, 2).map((payment) => <div className="small text-secondary" key={payment.id}>Collection {currency(payment.amount)} from {payment.customerName}</div>)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SuppliersView({ suppliers, supplyEntries, form, setForm, supplyForm, setSupplyForm, onSave, onDelete, onSaveSupply, isAdmin, search, setSearch, editingId, onEdit }) {
   const filteredSuppliers = suppliers.filter((supplier) =>
     [supplier.name, supplier.farmName, supplier.location, supplier.zone, supplier.phone].join(" ").toLowerCase().includes(search.toLowerCase())

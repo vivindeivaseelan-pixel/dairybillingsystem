@@ -12,13 +12,13 @@ export function LoginScreen({ onLogin, error, loading }) {
               <div className="row g-0">
                 <div className="col-lg-7 login-visual p-5">
                   <div className="glass-tag">GK Dairy Company</div>
-                  <h1 className="display-4 fw-bold mt-4">Commercial dairy billing, cart checkout, support desk, and admin automation.</h1>
-                  <p className="lead text-white-50 mt-3">Designed for retail billing, route operations, collections, invoice control, cashback handling, and support management.</p>
+                  <h1 className="display-4 fw-bold mt-4">Premium dairy billing, user cart operations, and full admin control in one green farm-themed workspace.</h1>
+                  <p className="lead text-white-50 mt-3">Built for dairy farms, retail counters, route sales, cash collection, support handling, and daily admin automation.</p>
                   <div className="feature-grid mt-4">
                     <div className="feature-chip">Cart Billing</div>
-                    <div className="feature-chip">Real Payments</div>
+                    <div className="feature-chip">Farm Operations</div>
                     <div className="feature-chip">Editable Invoice</div>
-                    <div className="feature-chip">Admin Cashback</div>
+                    <div className="feature-chip">Admin Automation</div>
                   </div>
                 </div>
                 <div className="col-lg-5 bg-white p-5">
@@ -42,26 +42,31 @@ export function LoginScreen({ onLogin, error, loading }) {
 }
 
 export function Sidebar({ user, view, setView, onLogout, isAdmin }) {
-  const items = [
-    ["dashboard", "Command Center"],
-    ["billing", "Billing Cart"],
-    ["customers", "Users"],
-    ["suppliers", "Suppliers"],
-    ["products", "Catalog"],
-    ["payments", "Payments"],
-    ["analytics", "Analytics"],
-    ["support", "Support"]
-  ];
-
-  if (isAdmin) {
-    items.push(["settings", "Admin Studio"]);
-  }
+  const items = isAdmin
+    ? [
+        ["dashboard", "Dashboard"],
+        ["billing", "User Billing Cart"],
+        ["customers", "Users"],
+        ["suppliers", "Suppliers"],
+        ["products", "Products"],
+        ["operations", "Operations"],
+        ["payments", "Payments"],
+        ["analytics", "Analytics"],
+        ["support", "Support"],
+        ["settings", "Admin Studio"]
+      ]
+    : [
+        ["dashboard", "Dashboard"],
+        ["billing", "Billing Cart"],
+        ["payments", "Payments"],
+        ["support", "Support"]
+      ];
 
   return (
     <aside className="sidebar">
       <div>
         <div className="brand-mark">GK Dairy</div>
-        <div className="sidebar-subtitle">Commercial business system</div>
+        <div className="sidebar-subtitle">{isAdmin ? "Admin and farm operations" : "User billing workspace"}</div>
       </div>
       <div className="profile-card glow-panel">
         <div className="profile-avatar">{user.name.slice(0, 1)}</div>

@@ -1,12 +1,12 @@
 :root {
-  --bg: #f5efe6;
-  --bg-soft: #fbf8f3;
-  --ink: #1f2430;
-  --deep: #14213d;
-  --slate: #33415c;
-  --gold: #d4a373;
-  --cream: #fffaf3;
-  --line: rgba(20, 33, 61, 0.08);
+  --bg: #eef6ee;
+  --bg-soft: #f9fffa;
+  --ink: #1d2d23;
+  --deep: #133d2a;
+  --slate: #2d5b42;
+  --gold: #cda86c;
+  --cream: #fcfff8;
+  --line: rgba(19, 61, 42, 0.1);
   --glass: rgba(255, 255, 255, 0.76);
 }
 
@@ -16,13 +16,14 @@ body {
   font-family: Georgia, "Times New Roman", serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(212, 163, 115, 0.18), transparent 30%),
-    linear-gradient(140deg, #f7f1e8, #eef2f7 58%, #f7f7f5);
+    radial-gradient(circle at top left, rgba(87, 160, 103, 0.16), transparent 30%),
+    radial-gradient(circle at top right, rgba(205, 168, 108, 0.16), transparent 26%),
+    linear-gradient(140deg, #f6fff6, #edf8ef 52%, #f7fbf7);
 }
 
 .login-shell {
   min-height: 100vh;
-  background: linear-gradient(rgba(20, 33, 61, 0.7), rgba(20, 33, 61, 0.48)), url("https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1600&q=80") center/cover;
+  background: linear-gradient(rgba(19, 61, 42, 0.72), rgba(19, 61, 42, 0.46)), url("https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1600&q=80") center/cover;
 }
 
 .login-card,
@@ -38,13 +39,13 @@ body {
   border-radius: 1.5rem;
   background: var(--glass);
   backdrop-filter: blur(14px);
-  box-shadow: 0 24px 70px rgba(20, 33, 61, 0.08);
+  box-shadow: 0 24px 70px rgba(19, 61, 42, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
 .login-visual {
   color: white;
-  background: linear-gradient(180deg, rgba(20, 33, 61, 0.88), rgba(51, 65, 92, 0.78)), url("https://images.unsplash.com/photo-1511117833895-4b473c0b85d6?auto=format&fit=crop&w=1600&q=80") center/cover;
+  background: linear-gradient(180deg, rgba(19, 61, 42, 0.9), rgba(38, 100, 66, 0.76)), url("https://images.unsplash.com/photo-1511117833895-4b473c0b85d6?auto=format&fit=crop&w=1600&q=80") center/cover;
 }
 
 .glass-tag,
@@ -83,8 +84,8 @@ body {
   gap: 1rem;
   padding: 2rem;
   background:
-    radial-gradient(circle at top, rgba(212, 163, 115, 0.18), transparent 26%),
-    linear-gradient(180deg, #101b34, #1f3157);
+    radial-gradient(circle at top, rgba(205, 168, 108, 0.18), transparent 26%),
+    linear-gradient(180deg, #103421, #1a5b37);
 }
 
 .brand-mark {
@@ -168,7 +169,7 @@ body {
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg, rgba(16, 27, 52, 0.9), rgba(16, 27, 52, 0.3));
+  background: linear-gradient(120deg, rgba(19, 61, 42, 0.9), rgba(19, 61, 42, 0.28));
 }
 
 .hero-copy {
@@ -200,7 +201,7 @@ body {
 
 .hover-rise:hover {
   transform: translateY(-5px);
-  box-shadow: 0 28px 80px rgba(20, 33, 61, 0.14);
+  box-shadow: 0 28px 80px rgba(19, 61, 42, 0.14);
 }
 
 .premium-button {
@@ -239,8 +240,16 @@ body {
 .soft-note {
   padding: 1rem;
   border-radius: 1rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.86), rgba(246, 241, 232, 0.9));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(237, 248, 239, 0.9));
   border: 1px solid var(--line);
+}
+
+.smart-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  height: 100%;
 }
 
 .split-row,
@@ -267,7 +276,7 @@ body {
   flex-wrap: wrap;
   padding: 1rem 1.2rem;
   border-radius: 1rem;
-  background: linear-gradient(135deg, rgba(20, 33, 61, 0.08), rgba(212, 163, 115, 0.16));
+  background: linear-gradient(135deg, rgba(19, 61, 42, 0.08), rgba(205, 168, 108, 0.16));
   font-weight: 700;
 }
 
@@ -304,7 +313,7 @@ body {
   height: 280px;
   padding: 0.5rem;
   border-radius: 1rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(246, 241, 232, 0.88));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.84), rgba(237, 248, 239, 0.9));
 }
 
 .chart-shell-wide {
@@ -338,12 +347,12 @@ body {
 }
 
 .status-neutral {
-  background: rgba(20, 33, 61, 0.08);
+  background: rgba(19, 61, 42, 0.08);
   color: var(--deep);
 }
 
 .subpanel {
-  background: rgba(20, 33, 61, 0.03);
+  background: rgba(19, 61, 42, 0.03);
 }
 
 .soft-note {

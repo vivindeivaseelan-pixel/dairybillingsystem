@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoginScreen, Sidebar } from "./components/Layout.jsx";
-import { AnalyticsView, CustomersView, PaymentsView, ProductsView, SettingsView, SuppliersView, SupportView } from "./components/AdminViews.jsx";
+import { AnalyticsView, CustomersView, OperationsView, PaymentsView, ProductsView, SettingsView, SuppliersView, SupportView } from "./components/AdminViews.jsx";
 import { BillingView, DashboardView } from "./components/Views.jsx";
 import {
   api,
@@ -285,6 +285,34 @@ function App() {
     printInvoice(invoice, settings);
   }
 
+  function reuseInvoice(invoice) {
+    setInvoiceForm({
+      customerId: invoice.customerId || "",
+      customerName: invoice.customerName || "",
+      customerPhone: invoice.customerPhone || "",
+      date: new Date().toISOString().slice(0, 10),
+      paymentMode: invoice.paymentMode || "GPay QR Code",
+      deliverySlot: invoice.deliverySlot || "Morning",
+      orderType: invoice.orderType || "Retail",
+      route: invoice.route || "",
+      zone: invoice.zone || "",
+      notes: invoice.notes || "",
+      discount: String(invoice.discount || ""),
+      tax: String(invoice.tax || ""),
+      receivedAmount: "",
+      balanceAmount: "",
+      items: (invoice.items || []).map((item) => ({
+        productId: item.productId || "",
+        name: item.name || "",
+        quantity: String(item.quantity || ""),
+        unit: item.unit || "litre",
+        price: String(item.price || "")
+      }))
+    });
+    setView("billing");
+    setMessage(`Loaded ${invoice.invoiceNumber} into the billing cart.`);
+  }
+
   function editCustomer(customer) {
     if (!customer) {
       setEditingCustomerId("");
@@ -334,10 +362,11 @@ function App() {
         </div>
 
         {view === "dashboard" ? <DashboardView dashboard={dashboard} report={report} customers={customers} payments={payments} supportTickets={supportTickets} settings={settings} onPrintLast={invoices[0] ? () => printInvoice(invoices[0], settings) : null} /> : null}
-        {view === "billing" ? <BillingView products={products} customers={customers} invoices={invoices} invoiceForm={invoiceForm} setInvoiceForm={setInvoiceForm} settings={settings} onCreate={createInvoice} /> : null}
+        {view === "billing" ? <BillingView products={products} customers={customers} invoices={invoices} invoiceForm={invoiceForm} setInvoiceForm={setInvoiceForm} settings={settings} onCreate={createInvoice} onReuseInvoice={reuseInvoice} /> : null}
         {view === "customers" ? <CustomersView customers={customers} form={customerForm} setForm={setCustomerForm} onSave={saveCustomer} onDelete={deleteCustomer} isAdmin={isAdmin} search={customerSearch} setSearch={setCustomerSearch} editingId={editingCustomerId} onEdit={editCustomer} /> : null}
         {view === "suppliers" ? <SuppliersView suppliers={suppliers} supplyEntries={milkSupplies} form={supplierForm} setForm={setSupplierForm} supplyForm={supplyForm} setSupplyForm={setSupplyForm} onSave={saveSupplier} onDelete={deleteSupplier} onSaveSupply={addSupply} isAdmin={isAdmin} search={supplierSearch} setSearch={setSupplierSearch} editingId={editingSupplierId} onEdit={editSupplier} /> : null}
         {view === "products" ? <ProductsView products={products} form={productForm} setForm={setProductForm} onSave={saveProduct} isAdmin={isAdmin} editingId={editingProductId} onEdit={editProduct} /> : null}
+        {view === "operations" && isAdmin ? <OperationsView products={products} customers={customers} supplies={milkSupplies} invoices={invoices} payments={payments} supportTickets={supportTickets} /> : null}
         {view === "payments" ? <PaymentsView payments={payments} customers={customers} form={paymentForm} setForm={setPaymentForm} onSave={savePayment} onGatewayPay={startGatewayPayment} isAdmin={isAdmin} settings={settings} gatewayConfig={gatewayConfig} /> : null}
         {view === "analytics" ? <AnalyticsView report={report} /> : null}
         {view === "support" ? <SupportView customers={customers} suppliers={suppliers} supportTickets={supportTickets} supportForm={supportForm} setSupportForm={setSupportForm} onSaveSupport={saveSupport} isAdmin={isAdmin} onUpdateTicket={updateTicket} /> : null}

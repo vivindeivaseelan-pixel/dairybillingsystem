@@ -148,7 +148,7 @@ export function DashboardView({ dashboard, report, customers, payments, supportT
   );
 }
 
-export function BillingView({ products, customers, invoices, invoiceForm, setInvoiceForm, settings, onCreate }) {
+export function BillingView({ products, customers, invoices, invoiceForm, setInvoiceForm, settings, onCreate, onReuseInvoice }) {
   const subtotal = useMemo(
     () => invoiceForm.items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0),
     [invoiceForm.items]
@@ -156,6 +156,8 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
   const total = subtotal - Number(invoiceForm.discount || 0) + Number(invoiceForm.tax || 0);
   const received = Number(invoiceForm.receivedAmount || 0);
   const balance = Math.max(total - received, 0);
+  const suggestedProducts = products.slice(0, 4);
+  const recentReusable = invoices.slice(0, 3);
 
   function syncCustomer(name) {
     const match = customers.find((customer) => customer.name.toLowerCase() === name.toLowerCase());
@@ -198,11 +200,30 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
   return (
     <div className="row g-4">
       <div className="col-xl-8">
-        <div className="card border-0 section-card glow-panel">
+          <div className="card border-0 section-card glow-panel">
           <div className="card-body">
-            <SectionHeader title="Billing Cart" subtitle="Commercial checkout with editable cart, delivery mode, and premium invoice preview" action={<button className="btn btn-dark premium-button" onClick={() => printInvoice(draftInvoice, settings)}>Preview Bill</button>} />
+            <SectionHeader title="Billing Cart" subtitle="User billing cart with smart autofill, reusable bills, and premium invoice preview" action={<button className="btn btn-success premium-button" onClick={() => printInvoice(draftInvoice, settings)}>Preview Bill</button>} />
             <datalist id="customer-list">{customers.map((customer) => <option key={customer.id} value={customer.name} />)}</datalist>
             <datalist id="product-list">{products.map((product) => <option key={product.id} value={product.name} />)}</datalist>
+            <div className="row g-3 mb-4">
+              <div className="col-lg-7">
+                <div className="soft-note h-100">
+                  <div className="fw-semibold mb-2">User automation</div>
+                  <div>Customer selection auto-fills phone, route, and zone.</div>
+                  <div>Saved bills can be reused into the cart in one click.</div>
+                  <div>Admin invoice settings automatically control the final print layout.</div>
+                </div>
+              </div>
+              <div className="col-lg-5">
+                <div className="smart-strip">
+                  {suggestedProducts.map((product) => (
+                    <button key={product.id} type="button" className="btn btn-outline-success premium-button btn-sm" onClick={() => setInvoiceForm({ ...invoiceForm, items: [...invoiceForm.items, { productId: product.id, name: product.name, quantity: "1", unit: product.unit, price: String(product.price) }] })}>
+                      Add {product.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
             <form onSubmit={onCreate}>
               <div className="checkout-grid">
                 <div><label className="form-label">Customer Name</label><input className="form-control premium-input" list="customer-list" value={invoiceForm.customerName} onChange={(e) => syncCustomer(e.target.value)} /></div>
@@ -234,7 +255,7 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
               </div>
 
               <div className="d-flex flex-wrap gap-2">
-                <button type="button" className="btn btn-outline-dark premium-button" onClick={() => setInvoiceForm({ ...invoiceForm, items: [...invoiceForm.items, { productId: "", name: "", quantity: "", unit: "litre", price: "" }] })}>Add Product</button>
+                <button type="button" className="btn btn-outline-success premium-button" onClick={() => setInvoiceForm({ ...invoiceForm, items: [...invoiceForm.items, { productId: "", name: "", quantity: "", unit: "litre", price: "" }] })}>Add Product</button>
                 <button type="button" className="btn btn-outline-secondary premium-button" onClick={() => setInvoiceForm({ ...defaultInvoiceForm, date: invoiceForm.date })}>Clear Cart</button>
               </div>
 
@@ -252,7 +273,7 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
                 <div>Net Amount: {currency(total)}</div>
                 <div>Due: {currency(balance)}</div>
               </div>
-              <button className="btn btn-dark btn-lg mt-4 premium-button">Save Bill</button>
+              <button className="btn btn-success btn-lg mt-4 premium-button">Save Bill</button>
             </form>
           </div>
         </div>
@@ -270,15 +291,18 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
               <div className="small text-secondary">Support: {settings.supportPhone}</div>
             </div>
             <div>
-              <SectionHeader title="Saved Bills" subtitle="Quick reprint for dispatch and accounts" />
+              <SectionHeader title="Saved Bills" subtitle="Quick reprint or reuse for fast user billing" />
               <div className="d-grid gap-3">
-                {invoices.slice(0, 5).map((invoice) => (
+                {recentReusable.map((invoice) => (
                   <div className="list-panel hover-rise" key={invoice.id}>
                     <div>
                       <div className="fw-semibold">{invoice.customerName}</div>
                       <div className="small text-secondary">{invoice.invoiceNumber} | {invoice.date}</div>
                     </div>
-                    <button className="btn btn-outline-dark btn-sm premium-button" onClick={() => printInvoice(invoice, settings)}>Print</button>
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-outline-success btn-sm premium-button" onClick={() => onReuseInvoice(invoice)}>Reuse</button>
+                      <button className="btn btn-outline-dark btn-sm premium-button" onClick={() => printInvoice(invoice, settings)}>Print</button>
+                    </div>
                   </div>
                 ))}
               </div>
