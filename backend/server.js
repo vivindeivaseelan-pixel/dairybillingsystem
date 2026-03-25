@@ -476,7 +476,7 @@ app.post("/api/payments/razorpay/verify", (req, res) => {
     route: payload.route?.trim() || customer?.route || "",
     zone: payload.zone?.trim() || customer?.zone || "",
     amount,
-    method: "Razorpay",
+    method: payload.method?.trim() || "GPay QR Code",
     date: payload.date || new Date().toISOString().slice(0, 10),
     reference: paymentId,
     notes: `Razorpay order ${orderId}`,

@@ -305,7 +305,7 @@ export function PaymentsView({ payments, customers, form, setForm, onSave, onGat
                 <div className="col-md-6"><label className="form-label">Phone</label><input className="form-control premium-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })} /></div>
                 <div className="col-md-6"><label className="form-label">Amount</label><input className="form-control premium-input" inputMode="decimal" value={form.amount} onChange={(e) => setForm({ ...form, amount: sanitizeDecimal(e.target.value) })} /></div>
                 <div className="col-md-6"><label className="form-label">Date</label><input type="date" className="form-control premium-input" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-                <div className="col-md-6"><label className="form-label">Method</label><select className="form-select premium-input" value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })}><option>UPI</option><option>Cash</option><option>Card</option><option>Bank Transfer</option></select></div>
+                <div className="col-md-6"><label className="form-label">Method</label><select className="form-select premium-input" value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })}><option>GPay QR Code</option><option>Cash</option><option>Card</option></select></div>
                 <div className="col-md-6"><label className="form-label">Reference</label><input className="form-control premium-input" value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} /></div>
                 <div className="col-md-6"><label className="form-label">Collected By</label><input className="form-control premium-input" value={form.collectedBy} onChange={(e) => setForm({ ...form, collectedBy: e.target.value })} /></div>
               </div>
@@ -313,8 +313,8 @@ export function PaymentsView({ payments, customers, form, setForm, onSave, onGat
               <div className="soft-note mt-3">Cashback rule: {settings.cashbackEnabled ? `${settings.cashbackType === "flat" ? currency(settings.cashbackValue) : `${settings.cashbackValue}%`} on payments above ${currency(settings.cashbackMinimumSpend)}` : "Disabled"}</div>
               <div className="d-flex gap-2 flex-wrap mt-3">
                 <button className="btn btn-dark premium-button">Save Payment</button>
-                <button type="button" className="btn btn-outline-dark premium-button" disabled={!gatewayConfig.enabled} onClick={onGatewayPay}>
-                  {gatewayConfig.enabled ? "Pay with Razorpay" : "Razorpay Not Configured"}
+                <button type="button" className="btn btn-outline-dark premium-button" disabled={!gatewayConfig.enabled || form.method === "Cash"} onClick={onGatewayPay}>
+                  {gatewayConfig.enabled ? "Open GPay / Card Checkout" : "Checkout Not Configured"}
                 </button>
               </div>
             </form>
@@ -497,7 +497,7 @@ export function SettingsView({ form, setForm, onSave }) {
                 <div className="col-md-4"><label className="form-label">Email</label><input className="form-control premium-input" value={form.companyEmail} onChange={(e) => setForm({ ...form, companyEmail: e.target.value })} /></div>
                 <div className="col-md-4"><label className="form-label">GSTIN</label><input className="form-control premium-input" value={form.gstin} onChange={(e) => setForm({ ...form, gstin: e.target.value })} /></div>
                 <div className="col-md-4"><label className="form-label">FSSAI</label><input className="form-control premium-input" value={form.fssai} onChange={(e) => setForm({ ...form, fssai: e.target.value })} /></div>
-                <div className="col-md-4"><label className="form-label">UPI ID</label><input className="form-control premium-input" value={form.upiId} onChange={(e) => setForm({ ...form, upiId: e.target.value })} /></div>
+                <div className="col-md-4"><label className="form-label">GPay UPI ID</label><input className="form-control premium-input" value={form.upiId} onChange={(e) => setForm({ ...form, upiId: e.target.value })} /></div>
                 <div className="col-md-4"><label className="form-label">QR Text</label><input className="form-control premium-input" value={form.qrText} onChange={(e) => setForm({ ...form, qrText: e.target.value })} /></div>
                 <div className="col-md-4"><label className="form-label">Bank Name</label><input className="form-control premium-input" value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} /></div>
                 <div className="col-md-4"><label className="form-label">Account Name</label><input className="form-control premium-input" value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} /></div>
@@ -538,7 +538,7 @@ export function SettingsView({ form, setForm, onSave }) {
               <hr />
               <div className="small text-secondary">GSTIN: {form.gstin || "-"}</div>
               <div className="small text-secondary">FSSAI: {form.fssai || "-"}</div>
-              <div className="small text-secondary">UPI: {form.upiId || "-"}</div>
+              <div className="small text-secondary">GPay QR: {form.upiId || "-"}</div>
               <div className="small text-secondary">Support: {form.supportPhone || "-"}</div>
               <div className="soft-note mt-3">{form.invoiceFooter}</div>
             </div>

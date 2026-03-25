@@ -210,7 +210,7 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
                 <div><label className="form-label">Date</label><input type="date" className="form-control premium-input" value={invoiceForm.date} onChange={(e) => setInvoiceForm({ ...invoiceForm, date: e.target.value })} /></div>
                 <div><label className="form-label">Route</label><input className="form-control premium-input" value={invoiceForm.route} onChange={(e) => setInvoiceForm({ ...invoiceForm, route: e.target.value })} /></div>
                 <div><label className="form-label">Zone</label><input className="form-control premium-input" value={invoiceForm.zone} onChange={(e) => setInvoiceForm({ ...invoiceForm, zone: e.target.value })} /></div>
-                <div><label className="form-label">Payment Mode</label><select className="form-select premium-input" value={invoiceForm.paymentMode} onChange={(e) => setInvoiceForm({ ...invoiceForm, paymentMode: e.target.value })}><option>UPI</option><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Credit</option></select></div>
+                <div><label className="form-label">Payment Mode</label><select className="form-select premium-input" value={invoiceForm.paymentMode} onChange={(e) => setInvoiceForm({ ...invoiceForm, paymentMode: e.target.value })}><option>GPay QR Code</option><option>Cash</option><option>Card</option></select></div>
                 <div><label className="form-label">Delivery Slot</label><select className="form-select premium-input" value={invoiceForm.deliverySlot} onChange={(e) => setInvoiceForm({ ...invoiceForm, deliverySlot: e.target.value })}><option>Morning</option><option>Evening</option><option>Pickup</option></select></div>
                 <div><label className="form-label">Order Type</label><select className="form-select premium-input" value={invoiceForm.orderType} onChange={(e) => setInvoiceForm({ ...invoiceForm, orderType: e.target.value })}><option>Retail</option><option>Subscription</option><option>Wholesale</option></select></div>
               </div>
@@ -266,7 +266,7 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
               <div className="small text-uppercase text-secondary fw-semibold">{settings.companyName}</div>
               <div className="h5 fw-bold mt-2">{settings.invoiceTitle}</div>
               <div className="small text-secondary">{settings.invoiceSubtitle}</div>
-              <div className="small text-secondary mt-3">UPI: {settings.upiId}</div>
+              <div className="small text-secondary mt-3">GPay QR: {settings.upiId}</div>
               <div className="small text-secondary">Support: {settings.supportPhone}</div>
             </div>
             <div>

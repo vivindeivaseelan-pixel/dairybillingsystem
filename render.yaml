@@ -6,3 +6,12 @@ services:
     buildCommand: npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend
     startCommand: npm --prefix backend start
     autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: STORE_PATH
+        value: /var/data/store.json
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false

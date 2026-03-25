@@ -12,7 +12,7 @@ export const defaultInvoiceForm = {
   customerName: "",
   customerPhone: "",
   date: new Date().toISOString().slice(0, 10),
-  paymentMode: "UPI",
+  paymentMode: "GPay QR Code",
   deliverySlot: "Morning",
   orderType: "Retail",
   route: "",
@@ -133,7 +133,7 @@ export function makePaymentForm() {
     route: "",
     zone: "",
     amount: "",
-    method: "UPI",
+    method: "GPay QR Code",
     date: new Date().toISOString().slice(0, 10),
     reference: "",
     collectedBy: "",
@@ -339,7 +339,7 @@ export function printInvoice(invoiceLike, settings = {}) {
 
           <div class="row">
             <div class="cell"><strong>Amount in Words</strong><br>${escapeHtml(toWords(total))}</div>
-            <div class="cell"><strong>Payment Details</strong><br>UPI: ${escapeHtml(settings.upiId || "-")}<br>A/C: ${escapeHtml(settings.accountNumber || "-")}</div>
+            <div class="cell"><strong>Payment Details</strong><br>GPay QR: ${escapeHtml(settings.upiId || "-")}<br>A/C: ${escapeHtml(settings.accountNumber || "-")}</div>
             <div class="cell"><strong>Bank</strong><br>${escapeHtml(settings.bankName || "-")}<br>IFSC: ${escapeHtml(settings.ifsc || "-")}</div>
           </div>
 

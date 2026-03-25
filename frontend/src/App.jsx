@@ -166,6 +166,11 @@ function App() {
       return;
     }
 
+    if (paymentForm.method === "Cash") {
+      setMessage("Cash should be recorded directly, not through checkout.");
+      return;
+    }
+
     if (!gatewayConfig.enabled || !gatewayConfig.keyId) {
       setMessage("Razorpay is not configured yet on the server.");
       return;
@@ -202,7 +207,7 @@ function App() {
       },
       handler: async (response) => {
         await api("/payments/razorpay/verify", {
-          method: "POST",
+            method: "POST",
           body: JSON.stringify({
             ...paymentForm,
             amount,
