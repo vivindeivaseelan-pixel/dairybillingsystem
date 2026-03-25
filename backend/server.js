@@ -520,7 +520,7 @@ app.post("/api/payments", (req, res) => {
     date: payload.date || new Date().toISOString().slice(0, 10),
     reference: payload.reference?.trim() || "",
     notes: payload.notes?.trim() || "",
-    collectedBy: payload.collectedBy?.trim() || "Staff",
+    collectedBy: payload.collectedBy?.trim() || "User Desk",
     status: payload.status?.trim() || "Received",
     cashbackAmount
   };

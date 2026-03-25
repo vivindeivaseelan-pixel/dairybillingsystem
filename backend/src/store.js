@@ -38,7 +38,7 @@ const defaultSettings = () => ({
 const EMPTY_STORE = {
   users: [
     { id: "u1", name: "Admin", username: "admin", password: "admin123", role: "admin" },
-    { id: "u2", name: "Staff", username: "staff", password: "staff123", role: "staff" }
+    { id: "u2", name: "User", username: "user", password: "user123", role: "user" }
   ],
   products: [],
   suppliers: [],

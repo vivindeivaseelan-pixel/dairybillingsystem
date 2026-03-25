@@ -23,14 +23,14 @@ export function LoginScreen({ onLogin, error, loading }) {
                 </div>
                 <div className="col-lg-5 bg-white p-5">
                   <h2 className="h3 fw-bold">Sign In</h2>
-                  <p className="text-secondary">Open the GK Dairy commercial operations console.</p>
+                  <p className="text-secondary">Open the GK Dairy professional dairy operations system.</p>
                   <form onSubmit={(event) => { event.preventDefault(); onLogin(form); }}>
                     <div className="mb-3"><label className="form-label">Username</label><input className="form-control form-control-lg premium-input" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div>
                     <div className="mb-3"><label className="form-label">Password</label><input type="password" className="form-control form-control-lg premium-input" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></div>
                     {error ? <div className="alert alert-danger py-2">{error}</div> : null}
                     <button className="btn btn-success btn-lg w-100 premium-button" disabled={loading}>{loading ? "Signing in..." : "Open GK Dairy"}</button>
                   </form>
-                  <div className="small text-secondary mt-3">Demo accounts: `admin/admin123` and `staff/staff123`</div>
+                  <div className="small text-secondary mt-3">Demo accounts: `admin/admin123` and `user/user123`</div>
                 </div>
               </div>
             </div>
@@ -50,7 +50,7 @@ export function Sidebar({ user, view, setView, onLogout, isAdmin }) {
         ["suppliers", "Suppliers"],
         ["products", "Products"],
         ["operations", "Operations"],
-        ["payments", "Payments"],
+        ["payments", "Payment Checkout"],
         ["analytics", "Analytics"],
         ["support", "Support"],
         ["settings", "Admin Studio"]
@@ -58,7 +58,7 @@ export function Sidebar({ user, view, setView, onLogout, isAdmin }) {
     : [
         ["dashboard", "Dashboard"],
         ["billing", "Billing Cart"],
-        ["payments", "Payments"],
+        ["payments", "Payment Checkout"],
         ["support", "Support"]
       ];
 
@@ -66,7 +66,7 @@ export function Sidebar({ user, view, setView, onLogout, isAdmin }) {
     <aside className="sidebar">
       <div>
         <div className="brand-mark">GK Dairy</div>
-        <div className="sidebar-subtitle">{isAdmin ? "Admin and farm operations" : "User billing workspace"}</div>
+        <div className="sidebar-subtitle">{isAdmin ? "Professional admin and farm operations" : "Professional user billing workspace"}</div>
       </div>
       <div className="profile-card glow-panel">
         <div className="profile-avatar">{user.name.slice(0, 1)}</div>

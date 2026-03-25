@@ -9,10 +9,10 @@
     },
     {
       "id": "u2",
-      "name": "Staff",
-      "username": "staff",
-      "password": "staff123",
-      "role": "staff"
+      "name": "User",
+      "username": "user",
+      "password": "user123",
+      "role": "user"
     }
   ],
   "products": [

@@ -421,7 +421,7 @@ export function PaymentsView({ payments, customers, form, setForm, onSave, onGat
       <div className="col-xl-4">
         <div className="card border-0 section-card glow-panel">
           <div className="card-body">
-            <SectionHeader title={isAdmin ? "Payment Posting" : "Payment Module"} subtitle={isAdmin ? "Reconcile payments with cashback automation" : "Accept user payments with receipt-ready details"} />
+            <SectionHeader title={isAdmin ? "Admin Payment Checkout" : "User Payment Checkout"} subtitle={isAdmin ? "Professional payment posting, reconciliation, and cashback handling" : "Professional checkout for user payments and receipts"} />
             <datalist id="payment-customer-list">{customers.map((customer) => <option key={customer.id} value={customer.name} />)}</datalist>
             <form onSubmit={onSave}>
               <div className="mb-3"><label className="form-label">Customer Name</label><input className="form-control premium-input" list="payment-customer-list" value={form.customerName} onChange={(e) => syncCustomer(e.target.value)} /></div>
@@ -438,7 +438,7 @@ export function PaymentsView({ payments, customers, form, setForm, onSave, onGat
               <div className="d-flex gap-2 flex-wrap mt-3">
                 <button className="btn btn-dark premium-button">Save Payment</button>
                 <button type="button" className="btn btn-outline-dark premium-button" disabled={!gatewayConfig.enabled || form.method === "Cash"} onClick={onGatewayPay}>
-                  {gatewayConfig.enabled ? "Open GPay / Card Checkout" : "Checkout Not Configured"}
+                  {gatewayConfig.enabled ? "Open Payment Checkout" : "Checkout Not Configured"}
                 </button>
               </div>
             </form>
@@ -455,7 +455,7 @@ export function PaymentsView({ payments, customers, form, setForm, onSave, onGat
 
         <div className="card border-0 section-card glow-panel mt-4">
           <div className="card-body">
-            <SectionHeader title={isAdmin ? "Payment Tracking" : "Payment Records"} subtitle={isAdmin ? "Collections, references, reconciliation, and cashback" : "User payment history and collection proof"} />
+            <SectionHeader title={isAdmin ? "Admin Payment Records" : "User Payment Records"} subtitle={isAdmin ? "Collections, references, reconciliation, and cashback" : "User payment history and checkout proof"} />
             <div className="table-responsive">
               <table className="table align-middle premium-table">
                 <thead><tr><th>Date</th><th>Customer</th><th>Method</th><th>Reference</th><th>Status</th><th>Amount</th><th>Cashback</th></tr></thead>
@@ -616,7 +616,7 @@ export function SettingsView({ form, setForm, onSave }) {
       <div className="col-xl-7">
         <div className="card border-0 section-card glow-panel">
           <div className="card-body">
-            <SectionHeader title="Admin Studio" subtitle="Control invoice brand, payment defaults, support contacts, and cashback rules" />
+            <SectionHeader title="Professional Admin Studio" subtitle="Control invoice branding, payment checkout defaults, support contacts, and cashback rules" />
             <form onSubmit={onSave}>
               <div className="row g-3">
                 <div className="col-md-6"><label className="form-label">Company Name</label><input className="form-control premium-input" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} /></div>
@@ -662,7 +662,7 @@ export function SettingsView({ form, setForm, onSave }) {
       <div className="col-xl-5">
         <div className="card border-0 section-card glow-panel h-100">
           <div className="card-body">
-            <SectionHeader title="Invoice Preview Rules" subtitle="This controls what billing staff prints from the billing cart" />
+            <SectionHeader title="Invoice Preview Rules" subtitle="This controls what users and admin print from the billing cart and checkout flow" />
             <div className="bill-preview-card">
               <div className="small text-uppercase text-secondary fw-semibold">{form.companyName}</div>
               <div className="h4 fw-bold mt-2">{form.invoiceTitle}</div>

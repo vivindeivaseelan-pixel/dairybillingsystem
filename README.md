@@ -126,7 +126,7 @@ python analytics.py
 ## Demo users
 
 - `admin / admin123`
-- `staff / staff123`
+- `user / user123`
 
 ## Notes
 
