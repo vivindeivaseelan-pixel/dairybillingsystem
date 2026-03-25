@@ -2,7 +2,7 @@ const configuredApiBase = import.meta.env.VITE_API_BASE?.replace(/\/$/, "");
 export const API_BASE = configuredApiBase ? `${configuredApiBase}/api` : "/api";
 
 export const dairyImages = {
-  hero: "https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?auto=format&fit=crop&w=1600&q=80",
+  hero: "https://images.unsplash.com/photo-1511117833895-4b473c0b85d6?auto=format&fit=crop&w=1600&q=80",
   field: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1400&q=80",
   milk: "https://images.unsplash.com/photo-1563630423918-b58f07336ac9?auto=format&fit=crop&w=1400&q=80"
 };
@@ -12,8 +12,9 @@ export const defaultInvoiceForm = {
   customerName: "",
   customerPhone: "",
   date: new Date().toISOString().slice(0, 10),
-  paymentMode: "",
-  deliverySlot: "",
+  paymentMode: "UPI",
+  deliverySlot: "Morning",
+  orderType: "Retail",
   route: "",
   zone: "",
   notes: "",
@@ -53,6 +54,18 @@ export async function api(path, options = {}) {
   return response.json();
 }
 
+export function loadRazorpayScript() {
+  if (window.Razorpay) return Promise.resolve(true);
+
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 export function makeCustomerForm() {
   return {
     name: "",
@@ -67,6 +80,7 @@ export function makeCustomerForm() {
     longitude: "",
     mapLink: "",
     balance: "",
+    cashbackBalance: "",
     supportNotes: ""
   };
 }
@@ -119,7 +133,7 @@ export function makePaymentForm() {
     route: "",
     zone: "",
     amount: "",
-    method: "",
+    method: "UPI",
     date: new Date().toISOString().slice(0, 10),
     reference: "",
     collectedBy: "",
@@ -128,15 +142,65 @@ export function makePaymentForm() {
   };
 }
 
+export function makeSupportForm() {
+  return {
+    name: "",
+    phone: "",
+    type: "Customer",
+    priority: "Medium",
+    subject: "",
+    message: ""
+  };
+}
+
+export function makeSettingsForm(settings = {}) {
+  return {
+    companyName: settings.companyName || "GK Dairy Company",
+    companyTagline: settings.companyTagline || "",
+    invoicePrefix: settings.invoicePrefix || "GKD",
+    invoiceSequenceStart: String(settings.invoiceSequenceStart ?? 1),
+    invoiceTitle: settings.invoiceTitle || "Bill of Supply",
+    invoiceSubtitle: settings.invoiceSubtitle || "",
+    companyAddress: settings.companyAddress || "",
+    companyPhone: settings.companyPhone || "",
+    companyEmail: settings.companyEmail || "",
+    gstin: settings.gstin || "",
+    fssai: settings.fssai || "",
+    bankName: settings.bankName || "",
+    accountName: settings.accountName || "",
+    accountNumber: settings.accountNumber || "",
+    ifsc: settings.ifsc || "",
+    upiId: settings.upiId || "",
+    qrText: settings.qrText || "",
+    invoiceFooter: settings.invoiceFooter || "",
+    invoiceNotes: settings.invoiceNotes || "",
+    supportPhone: settings.supportPhone || "",
+    supportEmail: settings.supportEmail || "",
+    cashbackEnabled: Boolean(settings.cashbackEnabled),
+    cashbackType: settings.cashbackType || "percentage",
+    cashbackValue: String(settings.cashbackValue ?? 0),
+    cashbackMinimumSpend: String(settings.cashbackMinimumSpend ?? 0)
+  };
+}
+
 export function sanitizeDecimal(value) {
-  const cleaned = value.replace(/[^\d.]/g, "");
+  const cleaned = String(value).replace(/[^\d.]/g, "");
   const parts = cleaned.split(".");
   if (parts.length <= 1) return cleaned;
   return `${parts[0]}.${parts.slice(1).join("")}`;
 }
 
 export function sanitizePhone(value) {
-  return value.replace(/[^\d+]/g, "");
+  return String(value).replace(/[^\d+]/g, "");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function toWords(number) {
@@ -145,46 +209,48 @@ function toWords(number) {
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
   const underThousand = (n) => {
-    let str = "";
+    let text = "";
     if (n >= 100) {
-      str += `${ones[Math.floor(n / 100)]} Hundred `;
+      text += `${ones[Math.floor(n / 100)]} Hundred `;
       n %= 100;
     }
     if (n >= 20) {
-      str += `${tens[Math.floor(n / 10)]} `;
+      text += `${tens[Math.floor(n / 10)]} `;
       n %= 10;
     }
-    if (n > 0) str += `${ones[n]} `;
-    return str.trim();
+    if (n > 0) text += `${ones[n]} `;
+    return text.trim();
   };
 
   const units = [["Crore", 10000000], ["Lakh", 100000], ["Thousand", 1000], ["", 1]];
   let remaining = num;
-  let out = "";
+  let output = "";
   for (const [label, amount] of units) {
     if (remaining >= amount) {
       const part = Math.floor(remaining / amount);
       remaining %= amount;
-      out += `${underThousand(part)}${label ? ` ${label}` : ""} `;
+      output += `${underThousand(part)}${label ? ` ${label}` : ""} `;
     }
   }
-  return `${out.trim()} Rupees Only`;
+  return `${output.trim()} Rupees Only`;
 }
 
-export function printInvoice(invoiceLike) {
-  const rows = (invoiceLike.items || [])
-    .map(
-      (item, index) => `
+export function printInvoice(invoiceLike, settings = {}) {
+  const rows = (invoiceLike.items || []).map((item, index) => {
+    const quantity = Number(item.quantity || 0).toFixed(2);
+    const unitPrice = Number(item.price || 0).toFixed(2);
+    const total = Number(item.total || Number(item.quantity || 0) * Number(item.price || 0)).toFixed(2);
+    return `
       <tr>
         <td>${index + 1}</td>
-        <td>${item.name || ""}</td>
-        <td>${Number(item.quantity || 0).toFixed(2)}</td>
-        <td>${item.unit || ""}</td>
-        <td>${Number(item.price || 0).toFixed(2)}</td>
-        <td>${Number(item.total || Number(item.quantity || 0) * Number(item.price || 0)).toFixed(2)}</td>
-      </tr>`
-    )
-    .join("");
+        <td>${escapeHtml(item.name || "")}</td>
+        <td>${quantity}</td>
+        <td>${escapeHtml(item.unit || "")}</td>
+        <td>${unitPrice}</td>
+        <td>${total}</td>
+      </tr>
+    `;
+  }).join("");
 
   const subtotal = Number(invoiceLike.subtotal || 0);
   const discount = Number(invoiceLike.discount || 0);
@@ -193,73 +259,96 @@ export function printInvoice(invoiceLike) {
   const received = Number(invoiceLike.receivedAmount || 0);
   const balance = Number(invoiceLike.balanceAmount || total - received);
 
-  const popup = window.open("", "_blank", "width=1000,height=800");
+  const popup = window.open("", "_blank", "width=1100,height=900");
   if (!popup) return;
 
   popup.document.write(`
     <html>
       <head>
-        <title>Invoice</title>
+        <title>${escapeHtml(settings.companyName || "GK Dairy Company")} Invoice</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 24px; color: #1d2d23; }
-          .shell { max-width: 920px; margin: 0 auto; }
-          .top { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
-          .title { font-size: 24px; font-weight: 800; color: #13462f; }
-          .meta { font-size: 13px; color: #4f6358; }
-          table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-          th, td { border: 1px solid #d6e4d8; padding: 8px; text-align: left; font-size: 13px; }
-          th { background: #eff6f0; }
-          .summary-box { margin-top: 14px; border: 1px solid #cddfd0; border-radius: 10px; overflow: hidden; }
-          .summary-row { display: grid; grid-template-columns: 1fr 140px 140px; }
-          .summary-row div { padding: 8px 10px; border-top: 1px solid #dce8de; font-size: 13px; }
-          .summary-row:first-child div { border-top: 0; }
-          .amount-box { margin-top: 16px; border: 1px solid #cddfd0; border-radius: 12px; padding: 12px; }
-          .amount-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-          .amount-cell { border: 1px solid #dce8de; border-radius: 10px; padding: 10px; min-height: 60px; }
-          .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
-          .sign-box { border-top: 1px solid #90a99a; padding-top: 10px; text-align: center; min-height: 40px; }
+          body { font-family: "Arial", sans-serif; margin: 18px; color: #241d16; }
+          .sheet { max-width: 980px; margin: 0 auto; border: 1.5px solid #6a5647; }
+          .row { display: grid; grid-template-columns: 1.1fr 1fr 1fr; border-bottom: 1px solid #8b7866; }
+          .cell { padding: 10px 12px; border-right: 1px solid #8b7866; min-height: 48px; }
+          .cell:last-child { border-right: 0; }
+          .title-block { text-align: center; padding: 16px 12px; border-bottom: 1.5px solid #6a5647; }
+          .brand { font-size: 34px; font-weight: 800; letter-spacing: 1px; }
+          .subtitle { font-size: 13px; margin-top: 4px; }
+          .meta-grid { display: grid; grid-template-columns: 1.4fr 1fr; border-bottom: 1.5px solid #6a5647; }
+          .meta-grid > div { padding: 10px 12px; border-right: 1px solid #8b7866; }
+          .meta-grid > div:last-child { border-right: 0; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #8b7866; padding: 8px; font-size: 12px; text-align: left; }
+          th { background: #efe5db; }
+          .totals { width: 100%; border-top: 0; }
+          .totals td { font-weight: 700; }
+          .footer-grid { display: grid; grid-template-columns: 1.2fr .8fr; border-top: 1.5px solid #6a5647; }
+          .footer-grid > div { padding: 12px; border-right: 1px solid #8b7866; min-height: 150px; }
+          .footer-grid > div:last-child { border-right: 0; }
+          .tiny { font-size: 11px; line-height: 1.5; }
+          .signature { display: flex; justify-content: flex-end; align-items: flex-end; min-height: 130px; font-weight: 700; }
         </style>
       </head>
       <body>
-        <div class="shell">
-          <div class="top">
+        <div class="sheet">
+          <div class="title-block">
+            <div class="brand">${escapeHtml(settings.companyName || "GK Dairy Company")}</div>
+            <div class="subtitle">${escapeHtml(settings.invoiceTitle || "Bill of Supply")} (${escapeHtml(settings.invoiceSubtitle || "Original / Duplicate / Triplicate")})</div>
+            <div class="subtitle">GSTIN: ${escapeHtml(settings.gstin || "-")} | FSSAI: ${escapeHtml(settings.fssai || "-")}</div>
+            <div class="subtitle">${escapeHtml(settings.companyAddress || "-")} | ${escapeHtml(settings.companyPhone || "-")}</div>
+          </div>
+
+          <div class="meta-grid">
             <div>
-              <div class="title">Dairy Invoice</div>
-              <div class="meta">Customer: ${invoiceLike.customerName || "-"}</div>
-              <div class="meta">Phone: ${invoiceLike.customerPhone || "-"}</div>
-              <div class="meta">Route: ${invoiceLike.route || "-"} | Zone: ${invoiceLike.zone || "-"}</div>
+              <strong>Bill To</strong><br>
+              ${escapeHtml(invoiceLike.customerName || "-")}<br>
+              ${escapeHtml(invoiceLike.customerPhone || "-")}<br>
+              Route: ${escapeHtml(invoiceLike.route || "-")} | Zone: ${escapeHtml(invoiceLike.zone || "-")}
             </div>
-            <div class="meta">
-              <div>Invoice No: ${invoiceLike.invoiceNumber || "DRAFT"}</div>
-              <div>Date: ${invoiceLike.date || ""}</div>
-              <div>Payment: ${invoiceLike.paymentMode || "-"}</div>
+            <div>
+              <strong>Invoice No:</strong> ${escapeHtml(invoiceLike.invoiceNumber || "DRAFT")}<br>
+              <strong>Date:</strong> ${escapeHtml(invoiceLike.date || "")}<br>
+              <strong>Payment:</strong> ${escapeHtml(invoiceLike.paymentMode || "-")}<br>
+              <strong>Delivery:</strong> ${escapeHtml(invoiceLike.deliverySlot || "-")}
             </div>
           </div>
 
           <table>
-            <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Amount</th></tr></thead>
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Product Description</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Unit Price</th>
+                <th>Gross Amount</th>
+              </tr>
+            </thead>
             <tbody>${rows}</tbody>
           </table>
 
-          <div class="summary-box">
-            <div class="summary-row"><div>Subtotal</div><div></div><div>${subtotal.toFixed(2)}</div></div>
-            <div class="summary-row"><div>Discount</div><div></div><div>${discount.toFixed(2)}</div></div>
-            <div class="summary-row"><div>GST</div><div></div><div>${gst.toFixed(2)}</div></div>
-            <div class="summary-row"><div>Net Amount</div><div></div><div>${total.toFixed(2)}</div></div>
+          <table class="totals">
+            <tr><td style="width:70%">Subtotal</td><td>${subtotal.toFixed(2)}</td></tr>
+            <tr><td>Discount</td><td>${discount.toFixed(2)}</td></tr>
+            <tr><td>GST</td><td>${gst.toFixed(2)}</td></tr>
+            <tr><td>Total Invoice Amount</td><td>${total.toFixed(2)}</td></tr>
+            <tr><td>Received Amount</td><td>${received.toFixed(2)}</td></tr>
+            <tr><td>Balance Amount</td><td>${balance.toFixed(2)}</td></tr>
+          </table>
+
+          <div class="row">
+            <div class="cell"><strong>Amount in Words</strong><br>${escapeHtml(toWords(total))}</div>
+            <div class="cell"><strong>Payment Details</strong><br>UPI: ${escapeHtml(settings.upiId || "-")}<br>A/C: ${escapeHtml(settings.accountNumber || "-")}</div>
+            <div class="cell"><strong>Bank</strong><br>${escapeHtml(settings.bankName || "-")}<br>IFSC: ${escapeHtml(settings.ifsc || "-")}</div>
           </div>
 
-          <div class="amount-box">
-            <div><strong>Amount in Words:</strong> ${toWords(total)}</div>
-            <div class="amount-grid">
-              <div class="amount-cell"><strong>Received Amount</strong><br>${received.toFixed(2)}</div>
-              <div class="amount-cell"><strong>Balance Amount</strong><br>${balance.toFixed(2)}</div>
-              <div class="amount-cell"><strong>Notes</strong><br>${invoiceLike.notes || "-"}</div>
+          <div class="footer-grid">
+            <div class="tiny">
+              ${escapeHtml(settings.invoiceNotes || "Goods once sold will not be taken back.").replace(/\n/g, "<br>")}<br><br>
+              ${escapeHtml(invoiceLike.notes || settings.invoiceFooter || "").replace(/\n/g, "<br>")}
             </div>
-          </div>
-
-          <div class="sign-grid">
-            <div class="sign-box">Customer Signature</div>
-            <div class="sign-box">Authorized Signature</div>
+            <div class="signature">For ${escapeHtml(settings.companyName || "GK Dairy Company")}</div>
           </div>
         </div>
         <script>window.onload = () => window.print();</script>

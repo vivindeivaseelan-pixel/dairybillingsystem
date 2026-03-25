@@ -8,29 +8,29 @@ export function LoginScreen({ onLogin, error, loading }) {
       <div className="container py-5">
         <div className="row justify-content-center">
           <div className="col-xl-11">
-            <div className="login-card shadow-lg overflow-hidden">
+            <div className="login-card overflow-hidden">
               <div className="row g-0">
                 <div className="col-lg-7 login-visual p-5">
-                  <div className="glass-tag">Dairy System</div>
-                  <h1 className="display-4 fw-bold mt-4">Billing, milk supply, customer records, supplier records, analytics, and payment tracking.</h1>
-                  <p className="lead text-white-50 mt-3">Use the system to enter and manage dairy operations data.</p>
+                  <div className="glass-tag">GK Dairy Company</div>
+                  <h1 className="display-4 fw-bold mt-4">Commercial dairy billing, cart checkout, support desk, and admin automation.</h1>
+                  <p className="lead text-white-50 mt-3">Designed for retail billing, route operations, collections, invoice control, cashback handling, and support management.</p>
                   <div className="feature-grid mt-4">
-                    <div className="feature-chip">Billing</div>
-                    <div className="feature-chip">Suppliers</div>
-                    <div className="feature-chip">Customers</div>
-                    <div className="feature-chip">Payments</div>
+                    <div className="feature-chip">Cart Billing</div>
+                    <div className="feature-chip">Real Payments</div>
+                    <div className="feature-chip">Editable Invoice</div>
+                    <div className="feature-chip">Admin Cashback</div>
                   </div>
                 </div>
                 <div className="col-lg-5 bg-white p-5">
                   <h2 className="h3 fw-bold">Sign In</h2>
-                  <p className="text-secondary">Sign in to open the dairy system.</p>
+                  <p className="text-secondary">Open the GK Dairy commercial operations console.</p>
                   <form onSubmit={(event) => { event.preventDefault(); onLogin(form); }}>
-                    <div className="mb-3"><label className="form-label">Username</label><input className="form-control form-control-lg" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div>
-                    <div className="mb-3"><label className="form-label">Password</label><input type="password" className="form-control form-control-lg" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></div>
+                    <div className="mb-3"><label className="form-label">Username</label><input className="form-control form-control-lg premium-input" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div>
+                    <div className="mb-3"><label className="form-label">Password</label><input type="password" className="form-control form-control-lg premium-input" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></div>
                     {error ? <div className="alert alert-danger py-2">{error}</div> : null}
-                    <button className="btn btn-success btn-lg w-100 premium-button" disabled={loading}>{loading ? "Signing in..." : "Open System"}</button>
+                    <button className="btn btn-dark btn-lg w-100 premium-button" disabled={loading}>{loading ? "Signing in..." : "Open GK Dairy"}</button>
                   </form>
-                  <div className="small text-secondary mt-3">Demo: admin/admin123 or staff/staff123</div>
+                  <div className="small text-secondary mt-3">Demo accounts: `admin/admin123` and `staff/staff123`</div>
                 </div>
               </div>
             </div>
@@ -41,30 +41,33 @@ export function LoginScreen({ onLogin, error, loading }) {
   );
 }
 
-export function Sidebar({ user, view, setView, onLogout }) {
+export function Sidebar({ user, view, setView, onLogout, isAdmin }) {
   const items = [
-    ["dashboard", "Dashboard"],
-    ["billing", "Billing"],
-    ["customers", "Customers"],
+    ["dashboard", "Command Center"],
+    ["billing", "Billing Cart"],
+    ["customers", "Users"],
     ["suppliers", "Suppliers"],
-    ["products", "Products"],
-    ["tracking", "Live Tracking"],
+    ["products", "Catalog"],
     ["payments", "Payments"],
     ["analytics", "Analytics"],
     ["support", "Support"]
   ];
 
+  if (isAdmin) {
+    items.push(["settings", "Admin Studio"]);
+  }
+
   return (
     <aside className="sidebar">
       <div>
-        <div className="brand-mark">Dairy Desk</div>
-        <div className="sidebar-subtitle">Operations and records</div>
+        <div className="brand-mark">GK Dairy</div>
+        <div className="sidebar-subtitle">Commercial business system</div>
       </div>
       <div className="profile-card glow-panel">
         <div className="profile-avatar">{user.name.slice(0, 1)}</div>
         <div>
           <div className="fw-semibold text-white">{user.name}</div>
-          <div className="small text-white-50">{user.role}</div>
+          <div className="small text-white-50 text-capitalize">{user.role}</div>
         </div>
       </div>
       <div className="nav flex-column gap-2 mt-2">

@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -22,8 +22,53 @@ const FRONTEND_DIST = path.join(__dirname, "..", "frontend", "dist");
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
+function calculateCashback(settings, amount) {
+  if (!settings.cashbackEnabled) return 0;
+  if (amount < Number(settings.cashbackMinimumSpend || 0)) return 0;
+  if (settings.cashbackType === "flat") return Number(settings.cashbackValue || 0);
+  return Number(((amount * Number(settings.cashbackValue || 0)) / 100).toFixed(2));
+}
+
+function getRazorpayConfig() {
+  return {
+    keyId: process.env.RAZORPAY_KEY_ID || "",
+    keySecret: process.env.RAZORPAY_KEY_SECRET || "",
+    enabled: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET)
+  };
+}
+
+async function createRazorpayOrder({ amount, receipt, notes }) {
+  const { keyId, keySecret, enabled } = getRazorpayConfig();
+  if (!enabled) {
+    throw new Error("Razorpay is not configured on the server.");
+  }
+
+  const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+  const response = await fetch("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${auth}`
+    },
+    body: JSON.stringify({
+      amount: Math.round(Number(amount || 0) * 100),
+      currency: "INR",
+      receipt,
+      payment_capture: 1,
+      notes
+    })
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error?.description || "Unable to create Razorpay order.");
+  }
+
+  return data;
+}
+
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, service: "dairy-api" });
+  res.json({ ok: true, service: "gk-dairy-api" });
 });
 
 app.post("/api/auth/login", (req, res) => {
@@ -49,6 +94,20 @@ app.get("/api/dashboard", (_req, res) => {
   res.json(buildDashboardStats(readStore()));
 });
 
+app.get("/api/settings", (_req, res) => {
+  res.json(readStore().settings);
+});
+
+app.put("/api/settings", (req, res) => {
+  const store = readStore();
+  store.settings = {
+    ...store.settings,
+    ...req.body
+  };
+  writeStore(store);
+  res.json(store.settings);
+});
+
 app.get("/api/products", (_req, res) => {
   res.json(readStore().products);
 });
@@ -56,7 +115,6 @@ app.get("/api/products", (_req, res) => {
 app.post("/api/products", (req, res) => {
   const store = readStore();
   const payload = req.body ?? {};
-
   const product = {
     id: randomUUID(),
     name: payload.name?.trim(),
@@ -80,7 +138,6 @@ app.post("/api/products", (req, res) => {
 app.put("/api/products/:id", (req, res) => {
   const store = readStore();
   const product = store.products.find((entry) => entry.id === req.params.id);
-
   if (!product) {
     return res.status(404).json({ message: "Product not found." });
   }
@@ -93,7 +150,6 @@ app.put("/api/products/:id", (req, res) => {
   product.stock = Number(payload.stock ?? product.stock);
   product.fat = Number(payload.fat ?? product.fat);
   product.status = payload.status?.trim() || product.status;
-
   writeStore(store);
   res.json(product);
 });
@@ -105,7 +161,6 @@ app.get("/api/customers", (_req, res) => {
 app.post("/api/customers", (req, res) => {
   const store = readStore();
   const payload = req.body ?? {};
-
   const customer = {
     id: randomUUID(),
     name: payload.name?.trim(),
@@ -121,7 +176,8 @@ app.post("/api/customers", (req, res) => {
     mapLink: payload.mapLink?.trim() || "",
     balance: Number(payload.balance || 0),
     joinedOn: payload.joinedOn || new Date().toISOString().slice(0, 10),
-    supportNotes: payload.supportNotes?.trim() || ""
+    supportNotes: payload.supportNotes?.trim() || "",
+    cashbackBalance: Number(payload.cashbackBalance || 0)
   };
 
   if (!customer.name) {
@@ -136,7 +192,6 @@ app.post("/api/customers", (req, res) => {
 app.put("/api/customers/:id", (req, res) => {
   const store = readStore();
   const customer = store.customers.find((entry) => entry.id === req.params.id);
-
   if (!customer) {
     return res.status(404).json({ message: "Customer not found." });
   }
@@ -154,8 +209,8 @@ app.put("/api/customers/:id", (req, res) => {
   customer.longitude = payload.longitude?.trim() ?? customer.longitude;
   customer.mapLink = payload.mapLink?.trim() ?? customer.mapLink;
   customer.balance = Number(payload.balance ?? customer.balance);
+  customer.cashbackBalance = Number(payload.cashbackBalance ?? customer.cashbackBalance ?? 0);
   customer.supportNotes = payload.supportNotes?.trim() ?? customer.supportNotes;
-
   writeStore(store);
   res.json(customer);
 });
@@ -164,11 +219,9 @@ app.delete("/api/customers/:id", (req, res) => {
   const store = readStore();
   const before = store.customers.length;
   store.customers = store.customers.filter((customer) => customer.id !== req.params.id);
-
   if (store.customers.length === before) {
     return res.status(404).json({ message: "Customer not found." });
   }
-
   writeStore(store);
   res.json({ ok: true });
 });
@@ -180,7 +233,6 @@ app.get("/api/suppliers", (_req, res) => {
 app.post("/api/suppliers", (req, res) => {
   const store = readStore();
   const payload = req.body ?? {};
-
   const supplier = {
     id: randomUUID(),
     name: payload.name?.trim(),
@@ -208,7 +260,6 @@ app.post("/api/suppliers", (req, res) => {
 app.put("/api/suppliers/:id", (req, res) => {
   const store = readStore();
   const supplier = store.suppliers.find((entry) => entry.id === req.params.id);
-
   if (!supplier) {
     return res.status(404).json({ message: "Supplier not found." });
   }
@@ -225,7 +276,6 @@ app.put("/api/suppliers/:id", (req, res) => {
   supplier.ratePerLitre = Number(payload.ratePerLitre ?? supplier.ratePerLitre);
   supplier.photoUrl = payload.photoUrl?.trim() ?? supplier.photoUrl;
   supplier.notes = payload.notes?.trim() ?? supplier.notes;
-
   writeStore(store);
   res.json(supplier);
 });
@@ -234,11 +284,9 @@ app.delete("/api/suppliers/:id", (req, res) => {
   const store = readStore();
   const before = store.suppliers.length;
   store.suppliers = store.suppliers.filter((supplier) => supplier.id !== req.params.id);
-
   if (store.suppliers.length === before) {
     return res.status(404).json({ message: "Supplier not found." });
   }
-
   writeStore(store);
   res.json({ ok: true });
 });
@@ -250,7 +298,6 @@ app.get("/api/milk-supplies", (_req, res) => {
 app.post("/api/milk-supplies", (req, res) => {
   const store = readStore();
   const payload = req.body ?? {};
-
   if (!payload.supplierId || !Number(payload.litres || 0)) {
     return res.status(400).json({ message: "Supplier and litres are required." });
   }
@@ -262,8 +309,6 @@ app.post("/api/milk-supplies", (req, res) => {
 
   const litres = Number(payload.litres || 0);
   const ratePerLitre = Number(payload.ratePerLitre || supplier.ratePerLitre || 0);
-  const totalCost = litres * ratePerLitre;
-
   const entry = {
     id: randomUUID(),
     supplierId: supplier.id,
@@ -277,7 +322,7 @@ app.post("/api/milk-supplies", (req, res) => {
     litres,
     fat: Number(payload.fat || 0),
     ratePerLitre,
-    totalCost
+    totalCost: litres * ratePerLitre
   };
 
   store.milkSupplies.unshift(entry);
@@ -299,19 +344,17 @@ app.post("/api/invoices", (req, res) => {
   }
 
   const customer = store.customers.find((entry) => entry.id === payload.customerId);
-  const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0),
-    0
-  );
+  const subtotal = items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.price || 0), 0);
   const discount = Number(payload.discount || 0);
   const tax = Number(payload.tax || 0);
   const total = subtotal - discount + tax;
   const receivedAmount = Number(payload.receivedAmount || 0);
   const balanceAmount = Number(payload.balanceAmount || Math.max(total - receivedAmount, 0));
+  const orderType = payload.orderType?.trim() || "Retail";
 
   const invoice = {
     id: randomUUID(),
-    invoiceNumber: payload.invoiceNumber?.trim() || nextInvoiceNumber(store.invoices),
+    invoiceNumber: payload.invoiceNumber?.trim() || nextInvoiceNumber(store.invoices, store.settings),
     date: payload.date || new Date().toISOString().slice(0, 10),
     customerId: payload.customerId || "",
     customerName: payload.customerName.trim(),
@@ -320,6 +363,7 @@ app.post("/api/invoices", (req, res) => {
     zone: payload.zone?.trim() || customer?.zone || "Local",
     paymentMode: payload.paymentMode?.trim() || "Cash",
     deliverySlot: payload.deliverySlot?.trim() || "Morning",
+    orderType,
     notes: payload.notes?.trim() || "",
     items: items.map((item) => ({
       productId: item.productId,
@@ -340,7 +384,7 @@ app.post("/api/invoices", (req, res) => {
   store.invoices.unshift(invoice);
 
   if (customer) {
-    customer.balance = Number(customer.balance || 0) + balanceAmount;
+    customer.balance = Math.max(0, Number(customer.balance || 0) + balanceAmount);
   }
 
   for (const item of invoice.items) {
@@ -355,7 +399,100 @@ app.post("/api/invoices", (req, res) => {
 });
 
 app.get("/api/payments", (_req, res) => {
-  res.json(readStore().payments || []);
+  res.json(readStore().payments);
+});
+
+app.get("/api/payments/config", (_req, res) => {
+  const { keyId, enabled } = getRazorpayConfig();
+  res.json({
+    gateway: "razorpay",
+    enabled,
+    keyId: enabled ? keyId : ""
+  });
+});
+
+app.post("/api/payments/razorpay/order", async (req, res) => {
+  try {
+    const payload = req.body ?? {};
+    const amount = Number(payload.amount || 0);
+    if (!payload.customerName?.trim() || amount <= 0) {
+      return res.status(400).json({ message: "Customer name and a valid amount are required." });
+    }
+
+    const order = await createRazorpayOrder({
+      amount,
+      receipt: `gk-${Date.now()}`,
+      notes: {
+        customerName: payload.customerName.trim(),
+        phone: payload.phone?.trim() || "",
+        route: payload.route?.trim() || "",
+        zone: payload.zone?.trim() || ""
+      }
+    });
+
+    res.status(201).json(order);
+  } catch (error) {
+    res.status(503).json({ message: error.message || "Unable to create Razorpay order." });
+  }
+});
+
+app.post("/api/payments/razorpay/verify", (req, res) => {
+  const store = readStore();
+  const payload = req.body ?? {};
+  const { keySecret, enabled } = getRazorpayConfig();
+
+  if (!enabled) {
+    return res.status(503).json({ message: "Razorpay is not configured on the server." });
+  }
+
+  const orderId = payload.razorpay_order_id?.trim();
+  const paymentId = payload.razorpay_payment_id?.trim();
+  const signature = payload.razorpay_signature?.trim();
+  const amount = Number(payload.amount || 0);
+
+  if (!orderId || !paymentId || !signature || amount <= 0 || !payload.customerName?.trim()) {
+    return res.status(400).json({ message: "Payment verification payload is incomplete." });
+  }
+
+  const generatedSignature = createHmac("sha256", keySecret).update(`${orderId}|${paymentId}`).digest("hex");
+  if (generatedSignature !== signature) {
+    return res.status(400).json({ message: "Razorpay signature verification failed." });
+  }
+
+  const existing = store.payments.find((entry) => entry.reference === paymentId);
+  if (existing) {
+    return res.json(existing);
+  }
+
+  const customer = store.customers.find((entry) => entry.id === payload.customerId) ||
+    store.customers.find((entry) => entry.name.toLowerCase() === payload.customerName.trim().toLowerCase());
+  const cashbackAmount = calculateCashback(store.settings, amount);
+
+  const payment = {
+    id: randomUUID(),
+    customerId: customer?.id || payload.customerId || "",
+    customerName: payload.customerName.trim(),
+    phone: payload.phone?.trim() || customer?.phone || "",
+    route: payload.route?.trim() || customer?.route || "",
+    zone: payload.zone?.trim() || customer?.zone || "",
+    amount,
+    method: "Razorpay",
+    date: payload.date || new Date().toISOString().slice(0, 10),
+    reference: paymentId,
+    notes: `Razorpay order ${orderId}`,
+    collectedBy: "Razorpay Checkout",
+    status: "Verified",
+    cashbackAmount
+  };
+
+  if (customer) {
+    customer.balance = Math.max(0, Number(customer.balance || 0) - amount);
+    customer.cashbackBalance = Number(customer.cashbackBalance || 0) + cashbackAmount;
+  }
+
+  store.payments.unshift(payment);
+  writeStore(store);
+  res.status(201).json(payment);
 });
 
 app.post("/api/payments", (req, res) => {
@@ -370,6 +507,7 @@ app.post("/api/payments", (req, res) => {
   const customer = store.customers.find((entry) => entry.id === payload.customerId) ||
     store.customers.find((entry) => entry.name.toLowerCase() === payload.customerName.trim().toLowerCase());
 
+  const cashbackAmount = calculateCashback(store.settings, amount);
   const payment = {
     id: randomUUID(),
     customerId: customer?.id || payload.customerId || "",
@@ -383,17 +521,61 @@ app.post("/api/payments", (req, res) => {
     reference: payload.reference?.trim() || "",
     notes: payload.notes?.trim() || "",
     collectedBy: payload.collectedBy?.trim() || "Staff",
-    status: payload.status?.trim() || "Received"
+    status: payload.status?.trim() || "Received",
+    cashbackAmount
   };
 
   if (customer) {
     customer.balance = Math.max(0, Number(customer.balance || 0) - amount);
+    customer.cashbackBalance = Number(customer.cashbackBalance || 0) + cashbackAmount;
   }
 
-  store.payments = Array.isArray(store.payments) ? store.payments : [];
   store.payments.unshift(payment);
   writeStore(store);
   res.status(201).json(payment);
+});
+
+app.get("/api/support-tickets", (_req, res) => {
+  res.json(readStore().supportTickets);
+});
+
+app.post("/api/support-tickets", (req, res) => {
+  const store = readStore();
+  const payload = req.body ?? {};
+  if (!payload.name?.trim() || !payload.subject?.trim()) {
+    return res.status(400).json({ message: "Name and subject are required." });
+  }
+
+  const ticket = {
+    id: randomUUID(),
+    name: payload.name.trim(),
+    phone: payload.phone?.trim() || "",
+    type: payload.type?.trim() || "Customer",
+    priority: payload.priority?.trim() || "Medium",
+    subject: payload.subject.trim(),
+    message: payload.message?.trim() || "",
+    status: payload.status?.trim() || "Open",
+    assignedTo: payload.assignedTo?.trim() || "Support Desk",
+    createdAt: new Date().toISOString()
+  };
+
+  store.supportTickets.unshift(ticket);
+  writeStore(store);
+  res.status(201).json(ticket);
+});
+
+app.put("/api/support-tickets/:id", (req, res) => {
+  const store = readStore();
+  const ticket = store.supportTickets.find((entry) => entry.id === req.params.id);
+  if (!ticket) {
+    return res.status(404).json({ message: "Support ticket not found." });
+  }
+
+  ticket.status = req.body?.status?.trim() || ticket.status;
+  ticket.priority = req.body?.priority?.trim() || ticket.priority;
+  ticket.assignedTo = req.body?.assignedTo?.trim() || ticket.assignedTo;
+  writeStore(store);
+  res.json(ticket);
 });
 
 app.get("/api/reports/sales", (_req, res) => {
@@ -411,5 +593,5 @@ app.get(/^(?!\/api).*/, (_req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Dairy API listening on http://localhost:${PORT}`);
+  console.log(`GK Dairy API listening on http://localhost:${PORT}`);
 });

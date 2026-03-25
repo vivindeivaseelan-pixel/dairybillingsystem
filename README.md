@@ -6,6 +6,7 @@ Single-service dairy system with:
 - React + Bootstrap frontend
 - JSON data storage
 - Python analytics helper
+- Razorpay-ready live payment integration
 
 The backend serves the built frontend, so production uses one web service and one public URL.
 
@@ -83,6 +84,8 @@ Recommended environment:
 
 - `PORT=4000`
 - `STORE_PATH=/var/data/store.json`
+- `RAZORPAY_KEY_ID=...`
+- `RAZORPAY_KEY_SECRET=...`
 
 ### Railway
 
@@ -111,6 +114,7 @@ Important:
 
 - For permanent data retention, `STORE_PATH` must point to a persistent disk path.
 - If you deploy without persistent storage, the app may reset data after redeploy/restart depending on the host.
+- To activate real online payments on the live URL, add valid Razorpay live keys in the Render environment variables.
 
 ## Python analytics
 
