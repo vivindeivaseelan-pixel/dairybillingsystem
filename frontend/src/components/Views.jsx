@@ -156,8 +156,25 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
   const total = subtotal - Number(invoiceForm.discount || 0) + Number(invoiceForm.tax || 0);
   const received = Number(invoiceForm.receivedAmount || 0);
   const balance = Math.max(total - received, 0);
-  const suggestedProducts = products.slice(0, 4);
+  const latestCustomerInvoice = useMemo(
+    () => invoices.find((invoice) => invoice.customerName?.toLowerCase() === invoiceForm.customerName?.toLowerCase()),
+    [invoices, invoiceForm.customerName]
+  );
+  const suggestedProducts = useMemo(() => {
+    if (latestCustomerInvoice?.items?.length) {
+      return latestCustomerInvoice.items
+        .map((item) => products.find((product) => product.id === item.productId) || products.find((product) => product.name.toLowerCase() === item.name.toLowerCase()))
+        .filter(Boolean)
+        .slice(0, 4);
+    }
+    return products.slice(0, 4);
+  }, [latestCustomerInvoice, products]);
   const recentReusable = invoices.slice(0, 3);
+  const smartTypingHints = [
+    "Start typing a customer name to auto-fill route and phone.",
+    "Use product suggestions to rebuild repeat orders faster.",
+    "Reuse an older bill to populate the full cart instantly."
+  ];
 
   function syncCustomer(name) {
     const match = customers.find((customer) => customer.name.toLowerCase() === name.toLowerCase());
@@ -165,13 +182,17 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
       setInvoiceForm({ ...invoiceForm, customerName: name });
       return;
     }
+    const previousInvoice = invoices.find((invoice) => invoice.customerName?.toLowerCase() === match.name.toLowerCase());
     setInvoiceForm({
       ...invoiceForm,
       customerId: match.id,
       customerName: match.name,
       customerPhone: match.phone,
       route: match.route || invoiceForm.route,
-      zone: match.zone || invoiceForm.zone
+      zone: match.zone || invoiceForm.zone,
+      paymentMode: previousInvoice?.paymentMode || invoiceForm.paymentMode,
+      deliverySlot: previousInvoice?.deliverySlot || invoiceForm.deliverySlot,
+      orderType: previousInvoice?.orderType || invoiceForm.orderType
     });
   }
 
@@ -197,6 +218,22 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
     items: invoiceForm.items.map((item) => ({ ...item, total: Number(item.quantity || 0) * Number(item.price || 0) }))
   };
 
+  function addSuggestedProduct(product) {
+    setInvoiceForm({
+      ...invoiceForm,
+      items: [
+        ...invoiceForm.items,
+        {
+          productId: product.id,
+          name: product.name,
+          quantity: "1",
+          unit: product.unit || "litre",
+          price: String(product.price || "")
+        }
+      ]
+    });
+  }
+
   return (
     <div className="row g-4">
       <div className="col-xl-8">
@@ -210,6 +247,7 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
                 <div className="soft-note h-100">
                   <div className="fw-semibold mb-2">User automation</div>
                   <div>Customer selection auto-fills phone, route, and zone.</div>
+                  <div>Previous bill preferences auto-fill payment mode, delivery slot, and order type.</div>
                   <div>Saved bills can be reused into the cart in one click.</div>
                   <div>Admin invoice settings automatically control the final print layout.</div>
                 </div>
@@ -217,13 +255,29 @@ export function BillingView({ products, customers, invoices, invoiceForm, setInv
               <div className="col-lg-5">
                 <div className="smart-strip">
                   {suggestedProducts.map((product) => (
-                    <button key={product.id} type="button" className="btn btn-outline-success premium-button btn-sm" onClick={() => setInvoiceForm({ ...invoiceForm, items: [...invoiceForm.items, { productId: product.id, name: product.name, quantity: "1", unit: product.unit, price: String(product.price) }] })}>
+                    <button key={product.id} type="button" className="btn btn-outline-success premium-button btn-sm" onClick={() => addSuggestedProduct(product)}>
                       Add {product.name}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
+            <div className="typing-hints mb-4">
+              {smartTypingHints.map((hint) => <span key={hint} className="hint-pill">{hint}</span>)}
+            </div>
+            {latestCustomerInvoice ? (
+              <div className="remembered-panel mb-4">
+                <div>
+                  <div className="fw-semibold">Previous preferences found for {latestCustomerInvoice.customerName}</div>
+                  <div className="small text-secondary">
+                    Last bill used {latestCustomerInvoice.paymentMode}, {latestCustomerInvoice.deliverySlot}, and {latestCustomerInvoice.orderType}.
+                  </div>
+                </div>
+                <button type="button" className="btn btn-success premium-button btn-sm" onClick={() => onReuseInvoice(latestCustomerInvoice)}>
+                  Load Previous Bill
+                </button>
+              </div>
+            ) : null}
             <form onSubmit={onCreate}>
               <div className="checkout-grid">
                 <div><label className="form-label">Customer Name</label><input className="form-control premium-input" list="customer-list" value={invoiceForm.customerName} onChange={(e) => syncCustomer(e.target.value)} /></div>

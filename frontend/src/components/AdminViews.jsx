@@ -33,6 +33,11 @@ export function OperationsView({ products, customers, supplies, invoices, paymen
   const openTickets = supportTickets.filter((ticket) => ticket.status !== "Closed").slice(0, 5);
   const todaySales = invoices.slice(0, 5);
   const latestCollections = payments.slice(0, 5);
+  const actionSuggestions = [
+    "Call users with highest dues first.",
+    "Restock products shown in the low stock list.",
+    "Close resolved support tickets to keep dispatch clean."
+  ];
 
   return (
     <div className="row g-4">
@@ -41,6 +46,9 @@ export function OperationsView({ products, customers, supplies, invoices, paymen
           <div className="card-body">
             <SectionHeader title="Automation Center" subtitle="System-driven farm and admin priorities" />
             <div className="d-grid gap-3">
+              {actionSuggestions.map((suggestion) => (
+                <div className="hint-pill operations-hint" key={suggestion}>{suggestion}</div>
+              ))}
               <div className="soft-note">
                 <div className="fw-semibold">Auto alerts</div>
                 <div>Low stock products, due users, and open support tickets are surfaced automatically.</div>
@@ -251,6 +259,7 @@ export function CustomersView({ customers, form, setForm, onSave, onDelete, isAd
   const filteredCustomers = customers.filter((customer) =>
     [customer.name, customer.area, customer.route, customer.zone, customer.phone, customer.locationName].join(" ").toLowerCase().includes(search.toLowerCase())
   );
+  const quickPlans = ["Daily Milk", "Monthly Subscription", "Retail Walk-in", "Wholesale"];
 
   return (
     <div className="row g-4">
@@ -258,6 +267,13 @@ export function CustomersView({ customers, form, setForm, onSave, onDelete, isAd
         <div className="card border-0 section-card glow-panel">
           <div className="card-body">
             <SectionHeader title={editingId ? "Edit User" : "Add User"} subtitle="Commercial buyer and household account setup" />
+            <div className="smart-strip mb-3">
+              {quickPlans.map((plan) => (
+                <button key={plan} type="button" className="btn btn-outline-success premium-button btn-sm" onClick={() => setForm({ ...form, plan })}>
+                  {plan}
+                </button>
+              ))}
+            </div>
             <form onSubmit={onSave}>
               <div className="mb-3"><label className="form-label">Customer Name</label><input className="form-control premium-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
               <div className="mb-3"><label className="form-label">Phone</label><input className="form-control premium-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: sanitizePhone(e.target.value) })} /></div>
@@ -507,6 +523,7 @@ export function SupportView({ customers, suppliers, supportTickets, supportForm,
     ...customers.map((entry) => ({ ...entry, type: "Customer", locationLabel: `${entry.area} | ${entry.route}`, notesText: entry.supportNotes })),
     ...suppliers.map((entry) => ({ ...entry, type: "Supplier", locationLabel: `${entry.location} | ${entry.zone}`, notesText: entry.notes }))
   ];
+  const quickSubjects = ["Milk not delivered", "Billing correction", "Payment follow-up", "Quality issue"];
 
   return (
     <div className="row g-4">
@@ -515,6 +532,13 @@ export function SupportView({ customers, suppliers, supportTickets, supportForm,
           <div className="card-body">
             <div className="support-visual rounded-4 mb-3" style={{ backgroundImage: `url(${dairyImages.milk})` }} />
             <SectionHeader title="Support Desk" subtitle="Create service tickets for delivery, billing, or quality issues" />
+            <div className="smart-strip mb-3">
+              {quickSubjects.map((subject) => (
+                <button key={subject} type="button" className="btn btn-outline-success premium-button btn-sm" onClick={() => setSupportForm({ ...supportForm, subject })}>
+                  {subject}
+                </button>
+              ))}
+            </div>
             <form onSubmit={onSaveSupport}>
               <div className="mb-3"><label className="form-label">Name</label><input className="form-control premium-input" value={supportForm.name} onChange={(e) => setSupportForm({ ...supportForm, name: e.target.value })} /></div>
               <div className="mb-3"><label className="form-label">Phone</label><input className="form-control premium-input" value={supportForm.phone} onChange={(e) => setSupportForm({ ...supportForm, phone: sanitizePhone(e.target.value) })} /></div>

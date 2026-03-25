@@ -28,7 +28,7 @@ export function LoginScreen({ onLogin, error, loading }) {
                     <div className="mb-3"><label className="form-label">Username</label><input className="form-control form-control-lg premium-input" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div>
                     <div className="mb-3"><label className="form-label">Password</label><input type="password" className="form-control form-control-lg premium-input" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></div>
                     {error ? <div className="alert alert-danger py-2">{error}</div> : null}
-                    <button className="btn btn-dark btn-lg w-100 premium-button" disabled={loading}>{loading ? "Signing in..." : "Open GK Dairy"}</button>
+                    <button className="btn btn-success btn-lg w-100 premium-button" disabled={loading}>{loading ? "Signing in..." : "Open GK Dairy"}</button>
                   </form>
                   <div className="small text-secondary mt-3">Demo accounts: `admin/admin123` and `staff/staff123`</div>
                 </div>

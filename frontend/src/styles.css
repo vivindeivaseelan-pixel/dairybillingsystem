@@ -58,6 +58,16 @@ body {
   padding: 0.45rem 0.9rem;
 }
 
+.hint-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(19, 61, 42, 0.08);
+  color: var(--slate);
+  font-size: 0.84rem;
+}
+
 .glass-tag,
 .feature-chip {
   background: rgba(255, 255, 255, 0.14);
@@ -250,6 +260,27 @@ body {
   gap: 0.6rem;
   align-items: center;
   height: 100%;
+}
+
+.typing-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.remembered-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(19, 61, 42, 0.1), rgba(255, 255, 255, 0.88));
+  border: 1px solid rgba(19, 61, 42, 0.1);
+}
+
+.operations-hint {
+  justify-content: center;
 }
 
 .split-row,
